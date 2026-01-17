@@ -1,0 +1,15 @@
+.app {
+  min-height: 100vh;
+  position: relative;
+  background: linear-gradient(135deg, #ffd1dc 0%, #ffebf0 50%, #fff0f5 100%);
+}
+
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-size: 24px;
+  color: #ff69b4;
+  font-weight: 600;
+}
