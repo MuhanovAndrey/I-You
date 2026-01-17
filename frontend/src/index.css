@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-br from-pink-50 via-purple-50 to-pink-100;
+    @apply bg-gradient-to-br from-rose-50/85 via-pink-50/85 to-pink-100/85;
     min-height: 100vh;
   }
 }
@@ -15,11 +15,12 @@
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-3 rounded-full font-semibold hover:from-pink-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl;
+    /* Sakura palette, slightly transparent (~15%) */
+    @apply bg-gradient-to-r from-rose-400/85 to-pink-500/85 text-white px-6 py-3 rounded-full font-semibold hover:from-rose-500/95 hover:to-pink-600/95 transition-all duration-300 shadow-lg hover:shadow-xl;
   }
 
   .btn-secondary {
-    @apply bg-white/80 text-pink-600 px-6 py-3 rounded-full font-semibold hover:bg-white transition-all duration-300 shadow-md hover:shadow-lg border border-pink-200;
+    @apply bg-white/80 text-rose-600/85 px-6 py-3 rounded-full font-semibold hover:bg-white transition-all duration-300 shadow-md hover:shadow-lg border border-rose-200/85;
   }
 
   .input-field {

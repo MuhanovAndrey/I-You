@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 interface Particle {
   id: number;
-  type: 'sakura' | 'heart';
+  type: 'sakura' | 'heart' | 'cat';
   x: number;
   y: number;
   delay: number;
@@ -14,14 +14,15 @@ export default function AnimatedBackground() {
 
   useEffect(() => {
     const newParticles: Particle[] = [];
-    for (let i = 0; i < 15; i++) {
+    for (let i = 0; i < 60; i++) {
       newParticles.push({
         id: i,
-        type: Math.random() > 0.5 ? 'sakura' : 'heart',
+        type: Math.random() < 0.34 ? 'sakura' : Math.random() < 0.67 ? 'heart' : 'cat',
         x: Math.random() * 100,
         y: Math.random() * 100,
         delay: Math.random() * 10,
-        duration: 15 + Math.random() * 10,
+        // Was ~15-25s. Now ~10-16s (~50% faster).
+        duration: 10 + Math.random() * 6,
       });
     }
     setParticles(newParticles);
@@ -29,7 +30,7 @@ export default function AnimatedBackground() {
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-      <div className="absolute inset-0 bg-gradient-to-br from-pink-100/30 via-purple-100/30 to-pink-200/30 backdrop-blur-3xl" />
+      <div className="absolute inset-0 bg-gradient-to-br from-rose-100/30 via-pink-100/30 to-pink-200/30 backdrop-blur-3xl" />
       {particles.map((particle) => (
         <div
           key={particle.id}
@@ -41,7 +42,7 @@ export default function AnimatedBackground() {
             animationDuration: `${particle.duration}s`,
           }}
         >
-          {particle.type === 'sakura' ? '🌸' : '💕'}
+          {particle.type === 'sakura' ? '🌸' : particle.type === 'heart' ? '💕' : '😺'}
         </div>
       ))}
     </div>

@@ -7,7 +7,13 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, username: string, password: string, telegramUsername?: string) => Promise<void>;
+  register: (
+    email: string,
+    username: string,
+    password: string,
+    telegramUsername: string
+  ) => Promise<{ registrationToken: string; telegramStartCode?: string; user: User; requiresTelegramVerification: boolean }>;
+  completeRegistration: (registrationToken: string) => Promise<void>;
   logout: () => void;
   loadUser: () => Promise<void>;
 }
@@ -31,6 +37,11 @@ export const useAuthStore = create<AuthState>((set) => ({
       password, 
       telegramUsername 
     });
+    return response.data;
+  },
+
+  completeRegistration: async (registrationToken) => {
+    const response = await api.post('/auth/complete-registration', { registrationToken });
     const { user, token } = response.data;
     localStorage.setItem('token', token);
     set({ user, token });
@@ -49,8 +60,8 @@ export const useAuthStore = create<AuthState>((set) => ({
         return;
       }
       
-      const response = await api.get('/auth/verify');
-      set({ user: response.data.user, isLoading: false });
+      const response = await api.get('/users/me');
+      set({ user: response.data, isLoading: false });
     } catch (error) {
       localStorage.removeItem('token');
       set({ user: null, token: null, isLoading: false });

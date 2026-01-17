@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { PairingRequest } from '../types';
@@ -10,12 +10,69 @@ export default function Pairing() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [requests, setRequests] = useState<PairingRequest[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [searchPending, setSearchPending] = useState(false);
+  const [showNoResults, setShowNoResults] = useState(false);
+  const requestSeqRef = useRef(0);
+  const emptyTimerRef = useRef<number | null>(null);
   const navigate = useNavigate();
-  const { loadUser } = useAuthStore();
+  const { loadUser, user } = useAuthStore();
 
   useEffect(() => {
     loadRequests();
   }, []);
+
+  useEffect(() => {
+    const normalized = searchQuery.trim();
+
+    if (emptyTimerRef.current) {
+      window.clearTimeout(emptyTimerRef.current);
+      emptyTimerRef.current = null;
+    }
+    setShowNoResults(false);
+
+    if (!normalized) {
+      setSearchResults([]);
+      setSearchPending(false);
+      return;
+    }
+
+    setSearchPending(true);
+
+    const seq = ++requestSeqRef.current;
+
+    const timer = setTimeout(async () => {
+      setSearching(true);
+      try {
+        let results: any[] = [];
+        const response = await api.get(`/users/search?query=${encodeURIComponent(normalized)}`);
+        results = response.data;
+
+        // Ignore out-of-date responses (prevents flicker “ничего не найдено”).
+        if (requestSeqRef.current !== seq) return;
+
+        setSearchResults(results);
+
+        if (results.length === 0) {
+          emptyTimerRef.current = window.setTimeout(() => {
+            // Only show if this is still the latest search.
+            if (requestSeqRef.current === seq) setShowNoResults(true);
+          }, 600);
+        }
+      } catch (error) {
+        if (requestSeqRef.current === seq) {
+          toast.error('Ошибка поиска');
+        }
+      } finally {
+        if (requestSeqRef.current === seq) {
+          setSearching(false);
+          setSearchPending(false);
+        }
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const loadRequests = async () => {
     try {
@@ -26,24 +83,10 @@ export default function Pairing() {
     }
   };
 
-  const searchUsers = async () => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    try {
-      const response = await api.get(`/users/search?query=${searchQuery}`);
-      setSearchResults(response.data);
-    } catch (error) {
-      toast.error('Ошибка поиска');
-    }
-  };
-
-  const sendRequest = async (targetUsername: string) => {
+  const sendRequest = async (targetTelegramUsername: string) => {
     setLoading(true);
     try {
-      await api.post('/pairing/request', { targetUsername });
+      await api.post('/pairing/request', { targetTelegramUsername });
       toast.success('Запрос отправлен! 💌');
       loadRequests();
       setSearchResults([]);
@@ -74,15 +117,21 @@ export default function Pairing() {
     }
   };
 
+  const currentUserId = user?.id;
   const pendingRequests = requests.filter(r => r.status === 'pending');
-  const receivedRequests = pendingRequests.filter(r => r.toUserId !== r.fromUserId);
+  const receivedRequests = currentUserId
+    ? pendingRequests.filter(r => r.toUserId === currentUserId)
+    : [];
+  const sentRequests = currentUserId
+    ? pendingRequests.filter(r => r.fromUserId === currentUserId)
+    : [];
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
       <div className="glass-card p-8 max-w-2xl w-full">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 mb-2">
-            Найти пару 💑
+          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 mb-2 leading-tight pb-1">
+            Найти пару ❤️
           </h1>
           <p className="text-gray-600">
             Найдите своего человека и свяжите аккаунты
@@ -129,19 +178,15 @@ export default function Pairing() {
 
         {/* Search Users */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-pink-600">Поиск пользователя</h2>
-          <div className="flex gap-2">
+          <h2 className="text-xl font-semibold text-pink-400">Поиск пользователя</h2>
+          <div>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && searchUsers()}
-              placeholder="Введите имя пользователя..."
-              className="input-field flex-1"
+              placeholder="Введите имя пользователя Telegram (например @ivan123)"
+              className="input-field w-full"
             />
-            <button onClick={searchUsers} className="btn-primary">
-              Поиск
-            </button>
           </div>
 
           {searchResults.length > 0 && (
@@ -158,7 +203,7 @@ export default function Pairing() {
                     )}
                   </div>
                   <button
-                    onClick={() => sendRequest(user.username)}
+                    onClick={() => sendRequest(user.telegramUsername)}
                     disabled={loading}
                     className="btn-secondary"
                   >
@@ -168,18 +213,20 @@ export default function Pairing() {
               ))}
             </div>
           )}
+
+          {!searchPending && !searching && showNoResults && searchQuery.trim() && searchResults.length === 0 && (
+            <p className="text-sm text-gray-600">Ничего не найдено</p>
+          )}
         </div>
 
         {/* Sent Requests */}
-        {pendingRequests.some(r => r.fromUserId === r.toUserId) && (
+        {sentRequests.length > 0 && (
           <div className="mt-8">
             <h2 className="text-xl font-semibold mb-4 text-pink-600">
               Отправленные запросы
             </h2>
             <div className="space-y-2">
-              {pendingRequests
-                .filter(r => r.fromUserId === r.toUserId)
-                .map((request) => (
+              {sentRequests.map((request) => (
                   <div
                     key={request.id}
                     className="bg-white/50 rounded-xl p-4"

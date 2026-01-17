@@ -20,12 +20,44 @@ interface NotificationData {
 }
 
 class TelegramService {
+  private listenersInitialized = false;
+
+  init(): void {
+    if (this.listenersInitialized) return;
+    if (!bot) return;
+
+    // When TELEGRAM_POLLING=true, node-telegram-bot-api receives messages automatically.
+    // We only need to attach listeners.
+    bot.on('message', async (message) => {
+      try {
+        await this.handleWebhook({ message });
+      } catch (error) {
+        console.error('Error processing Telegram message:', error);
+      }
+    });
+
+    bot.on('polling_error', (error) => {
+      console.error('Telegram polling error:', error);
+    });
+
+    bot.on('webhook_error', (error) => {
+      console.error('Telegram webhook error:', error);
+    });
+
+    this.listenersInitialized = true;
+    if ((process.env.NODE_ENV || 'development') !== 'test') {
+      console.log('✅ Telegram listeners attached');
+    }
+  }
+
   async sendNotification(data: NotificationData): Promise<void> {
     try {
       if (!bot) {
         console.warn('Telegram bot not configured');
         return;
       }
+
+      this.init();
 
       const toUser = await prisma.user.findUnique({
         where: { id: data.toUserId },
@@ -78,6 +110,8 @@ class TelegramService {
         return { verified: false };
       }
 
+      this.init();
+
       // In production, you would implement a verification flow
       // For now, we'll just mark as verified when they provide username
       // The actual verification would happen through a bot command
@@ -91,16 +125,67 @@ class TelegramService {
 
   async handleWebhook(update: any): Promise<void> {
     try {
+      this.init();
       if (!update.message) return;
 
       const chatId = update.message.chat.id;
       const text = update.message.text;
       const telegramUsername = update.message.from.username;
 
-      if (text === '/start') {
+      if (typeof text === 'string' && text.startsWith('/start')) {
+        const parts = text.trim().split(/\s+/);
+        const payload = parts.length > 1 ? (parts[1] || '').trim() : '';
+
+        // Preferred flow: verify by deep-link code (works even if user mistyped username).
+        if (payload) {
+          const now = new Date();
+          const userByCode = await prisma.user.findFirst({
+            where: {
+              telegramVerifyCode: payload,
+              telegramVerified: false,
+              OR: [
+                { telegramVerifyExpiresAt: null },
+                { telegramVerifyExpiresAt: { gt: now } }
+              ]
+            } as any
+          });
+
+          if (userByCode) {
+            await prisma.user.update({
+              where: { id: userByCode.id },
+              data: {
+                telegramChatId: chatId.toString(),
+                telegramVerified: true,
+                telegramVerifyCode: null,
+                telegramVerifyExpiresAt: null
+              } as any
+            });
+
+            await bot!.sendMessage(
+              chatId,
+              `✅ Привет, ${userByCode.username}! Telegram подтвержден.\n\nВернись на сайт — регистрация завершится автоматически 💕`,
+              { parse_mode: 'HTML' }
+            );
+            return;
+          }
+
+          await bot!.sendMessage(
+            chatId,
+            '⚠️ Ссылка для подтверждения устарела или неверна. Вернись на сайт и нажми «Открыть Telegram-бота» ещё раз.',
+          );
+          return;
+        }
+
+        if (!telegramUsername) {
+          await bot!.sendMessage(chatId,
+            '👋 Привет! У тебя не установлено имя пользователя Telegram.\n\nОткрой Telegram → Настройки → Имя пользователя (username) и установи его, затем снова нажми Start.'
+          );
+          return;
+        }
+
         const user = await prisma.user.findFirst({
           where: { 
-            telegramUsername: telegramUsername,
+            telegramUsername: { equals: telegramUsername, mode: 'insensitive' },
             telegramVerified: false
           }
         });
@@ -120,7 +205,7 @@ class TelegramService {
           );
         } else {
           await bot!.sendMessage(chatId,
-            `👋 Привет! Чтобы связать аккаунт с сайтом "ЯиТЫ", сначала зарегистрируйся на сайте и укажи свой Telegram username: @${telegramUsername}`,
+            `👋 Привет! Чтобы связать аккаунт с сайтом "ЯиТЫ", сначала зарегистрируйся на сайте и укажи свое имя пользователя Telegram: @${telegramUsername}`,
             { parse_mode: 'HTML' }
           );
         }

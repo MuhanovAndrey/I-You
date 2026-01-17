@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
 import { LoveReason, GiftIdea, StatePost } from '../types';
 import toast from 'react-hot-toast';
-import { formatDistanceToNow } from 'date-fns';
-import { ru } from 'date-fns/locale';
 import PostCard from '../components/PostCard';
 import CreatePostModal from '../components/CreatePostModal';
 
@@ -106,19 +105,29 @@ export default function Dashboard() {
       <header className="glass-card p-6 mb-6 max-w-4xl mx-auto">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600">
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-500/85 to-pink-600/85">
               ЯиТЫ
             </h1>
             <p className="text-gray-600 mt-1">
-              Вы и <span className="font-semibold text-pink-600">{user?.pairedWith?.username}</span> 💕
+              <span className="font-semibold text-pink-600">{user?.username}</span>
+              {' '}и{' '}
+              <span className="font-semibold text-pink-600">{user?.pairedWith?.username ?? '...'}</span> 💕
             </p>
           </div>
-          <button
-            onClick={logout}
-            className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg hover:bg-white/50 transition-colors"
-          >
-            Выйти
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/profile"
+              className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg hover:bg-white/50 transition-colors"
+            >
+              Профиль
+            </Link>
+            <button
+              onClick={logout}
+              className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg hover:bg-white/50 transition-colors"
+            >
+              Выйти
+            </button>
+          </div>
         </div>
       </header>
 
@@ -138,7 +147,7 @@ export default function Dashboard() {
           className="glass-card p-6 text-center hover:scale-105 transition-transform"
         >
           <div className="text-4xl mb-2">🎁</div>
-          <h3 className="font-semibold text-purple-600">Идея подарка</h3>
+          <h3 className="font-semibold text-rose-600/85">Идея подарка</h3>
           <p className="text-sm text-gray-600 mt-1">Что хочу подарить</p>
         </button>
 
@@ -166,7 +175,7 @@ export default function Dashboard() {
               onClick={() => setActiveTab(tab.key as PostType)}
               className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
                 activeTab === tab.key
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
+                  ? 'bg-gradient-to-r from-rose-400/85 to-pink-500/85 text-white shadow-lg'
                   : 'text-gray-600 hover:bg-white/50'
               }`}
             >

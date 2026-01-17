@@ -17,7 +17,7 @@ export default function Login() {
       await login(email, password);
       toast.success('Добро пожаловать! ❤️');
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Ошибка входа');
+      toast.error(error.response?.data?.error || 'Неверный email или пароль');
     } finally {
       setLoading(false);
     }
@@ -27,7 +27,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
       <div className="glass-card p-8 max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-600 mb-2">
+          <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-500/85 to-pink-600/85 mb-2">
             ЯиТЫ
           </h1>
           <p className="text-gray-600">Войдите в приложение для любви</p>

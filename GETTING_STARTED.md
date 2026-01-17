@@ -26,6 +26,24 @@ cd backend && npx prisma migrate dev --name init && cd ..
 npm run dev
 ```
 
+#### Windows (PowerShell) заметки
+
+Команды выше написаны в стиле macOS/Linux. На Windows используйте эквиваленты:
+
+```powershell
+# Скопировать .env
+Copy-Item backend\.env.example backend\.env
+```
+
+Создать БД можно любым удобным способом:
+
+- Через pgAdmin (Create → Database)
+- Или через psql:
+
+```powershell
+psql -U postgres -c "CREATE DATABASE i_you_db;"
+```
+
 Откройте http://localhost:3000
 
 ### 2. Минимальная конфигурация .env
@@ -171,10 +189,29 @@ lsof -ti:5000 | xargs kill -9
 lsof -ti:3000 | xargs kill -9
 ```
 
+**Windows (PowerShell):**
+
+```powershell
+# Найти PID по порту
+netstat -ano | findstr :5000
+netstat -ano | findstr :3000
+
+# Убить процесс (подставьте нужный PID)
+taskkill /PID 12345 /F
+```
+
 ### Ошибки TypeScript
 ```bash
 # Переустановите зависимости
 rm -rf node_modules package-lock.json
+npm run install:all
+```
+
+**Windows (PowerShell):**
+
+```powershell
+Remove-Item -Recurse -Force node_modules
+Remove-Item -Force package-lock.json
 npm run install:all
 ```
 

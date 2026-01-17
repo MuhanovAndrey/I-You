@@ -18,6 +18,8 @@ model User {
   telegramUsername  String?   @unique
   telegramChatId    String?   @unique
   telegramVerified  Boolean   @default(false)
+  telegramVerifyCode       String?   @unique
+  telegramVerifyExpiresAt  DateTime?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 

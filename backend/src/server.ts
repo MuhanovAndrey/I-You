@@ -3,17 +3,33 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.routes';
-import userRoutes from './routes/user.routes';
-import loveReasonRoutes from './routes/loveReason.routes';
-import giftIdeaRoutes from './routes/giftIdea.routes';
-import statePostRoutes from './routes/statePost.routes';
-import reactionRoutes from './routes/reaction.routes';
-import commentRoutes from './routes/comment.routes';
-import pairingRoutes from './routes/pairing.routes';
-import telegramRoutes from './routes/telegram.routes';
 
 dotenv.config();
+
+// IMPORTANT:
+// In CommonJS, TS `import` statements are executed (required) before any code runs.
+// Many local modules read process.env on import (e.g., Telegram bot config), so we must
+// load dotenv before requiring those modules.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const authRoutes = require('./routes/auth.routes').default;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const userRoutes = require('./routes/user.routes').default;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const loveReasonRoutes = require('./routes/loveReason.routes').default;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const giftIdeaRoutes = require('./routes/giftIdea.routes').default;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const statePostRoutes = require('./routes/statePost.routes').default;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const reactionRoutes = require('./routes/reaction.routes').default;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const commentRoutes = require('./routes/comment.routes').default;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const pairingRoutes = require('./routes/pairing.routes').default;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const telegramRoutes = require('./routes/telegram.routes').default;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const telegramService = require('./services/telegram.service').default;
 
 const app: Express = express();
 const PORT = process.env.PORT || 5000;
@@ -55,6 +71,13 @@ app.use((err: any, req: Request, res: Response, next: any) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV}`);
+
+  // Ensure Telegram bot listeners are attached right away (polling mode).
+  try {
+    telegramService?.init?.();
+  } catch (error) {
+    console.error('Telegram init error:', error);
+  }
 });
 
 export default app;
