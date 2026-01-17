@@ -1,0 +1,65 @@
+.feed-container {
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.feed-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 20px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 16px rgba(255, 105, 180, 0.1);
+  border-bottom: 2px solid rgba(255, 182, 193, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.feed-header h1 {
+  color: #ff69b4;
+  margin: 0;
+  font-size: 32px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: #666;
+}
+
+.logout-btn {
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #ff69b4, #ff1493);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: transform 0.2s;
+}
+
+.logout-btn:hover {
+  transform: translateY(-2px);
+}
+
+.feed-content {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #ff69b4;
+  font-size: 18px;
+}
+
+.posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
