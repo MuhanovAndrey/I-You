@@ -34,11 +34,32 @@ const telegramService = require('./services/telegram.service').default;
 const app: Express = express();
 const PORT = process.env.PORT || 5000;
 
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is required in production');
+  }
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is required in production');
+  }
+}
+
+const defaultFrontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+const corsOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((v) => v.trim())
+  .filter(Boolean);
+const allowedOrigins = Array.from(new Set([defaultFrontendUrl, ...corsOrigins]));
+
 // Middleware
 app.use(helmet());
 app.use(compression());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow non-browser requests (curl/postman) that don't send Origin.
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
   credentials: true
 }));
 app.use(express.json());

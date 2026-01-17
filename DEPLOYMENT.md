@@ -1,5 +1,102 @@
 # Руководство по развертыванию
 
+## План (если хотите задеплоить ВСЁ: БД + Backend + Frontend)
+
+Ниже самый простой практичный путь без туннелей (Cloudflare/ngrok) и без своего сервера.
+
+1. Подготовить секреты и переменные окружения (НЕ хранить в Git)
+2. Создать облачную PostgreSQL базу
+3. Задеплоить backend (Node + Prisma) и прогнать миграции
+4. Задеплоить frontend (Vite) и указать `VITE_API_URL`
+5. Настроить CORS (`FRONTEND_URL`/`CORS_ORIGINS`)
+6. (Опционально) настроить Telegram webhook
+
+Важно:
+
+- "Бесплатно" у хостингов часто означает free-tier с лимитами (сон сервисов, лимит часов/трафика). Тарифы меняются.
+- Секреты (`JWT_SECRET`, `TELEGRAM_BOT_TOKEN`) должны быть новыми и длинными.
+
+## Опция 0: Публичный Frontend + Backend/БД на вашем ПК (самый быстрый старт)
+
+Это вариант, когда сайт доступен вашей девушке из интернета, но сервер и база остаются на вашем компьютере.
+Работает только пока ваш ПК включён.
+
+### Важно по безопасности
+
+- НЕ публикуйте PostgreSQL в интернет. Публичным должен быть только backend (порт 5000).
+- Используйте HTTPS-туннель (cloudflared/ngrok), а не проброс портов на роутере.
+- Смените секреты для продакшена: `JWT_SECRET`, `TELEGRAM_BOT_TOKEN`.
+
+### Шаг 1. Запустите backend локально
+
+1. Настройте `backend/.env` (локальная база, секреты, токен бота — по желанию).
+2. Поднимите базу и миграции:
+   - `cd backend`
+   - `npx prisma migrate dev`
+3. Запустите backend:
+   - `npm run dev`
+4. Проверьте локально: `http://localhost:5000/health`
+
+### Шаг 2. Сделайте backend доступным по HTTPS из интернета (туннель)
+
+Рекомендуется **cloudflared** (быстро и бесплатно, даёт HTTPS URL):
+
+1. Скачайте cloudflared: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+2. Запустите туннель на ваш backend:
+   - `cloudflared tunnel --url http://localhost:5000`
+   - Если на Windows появляются ошибки про QUIC/"control stream" — попробуйте принудительно HTTP/2 и IPv4:
+     - `cloudflared tunnel --url http://localhost:5000 --protocol http2 --edge-ip-version 4`
+   - Сообщение про отсутствие `config.yml` на Windows можно игнорировать (для quick tunnel это нормально).
+3. Скопируйте выданный URL вида `https://<something>.trycloudflare.com`
+4. Проверьте с телефона (через мобильный интернет): откройте `https://<...>/health`
+
+Подсказка по логам на Windows:
+
+- Строки вида `ERR Cannot determine default origin certificate path ... cert.pem` и сообщение про "system root certificate pool" могут появляться даже для quick tunnel.
+- Если вы видите строку `Registered tunnel connection ... protocol=http2` — туннель подключился.
+- Главный критерий: `https://<...>/health` открывается с телефона.
+
+Альтернатива: **ngrok** (часто проще на Windows, даёт стабильный HTTPS во время работы):
+
+1. Зарегистрируйтесь: https://ngrok.com
+2. Установите и привяжите токен:
+   - `ngrok config add-authtoken <YOUR_TOKEN>`
+3. Запустите туннель:
+   - `ngrok http 5000`
+
+Если ngrok выдаёт `ERR_NGROK_9040` ("We do not allow agents to connect to ngrok from your IP address"):
+
+- Это ограничение на стороне ngrok для вашего IP/провайдера/региона. Кодом это не исправить.
+- Варианты:
+   - Включить VPN и попробовать снова.
+   - Использовать Cloudflare Tunnel с аккаунтом и (желательно) доменом в Cloudflare (стабильнее, чем quick tunnel).
+   - Как крайний вариант: проброс порта 5000 на роутере + HTTPS (Caddy/NGINX) + динамический DNS (не рекомендуется без опыта).
+
+### Шаг 3. Задеплойте frontend на Vercel
+
+1. Загрузите проект в GitHub (если ещё не там).
+2. Vercel: https://vercel.com → Add New → Project → Import Git Repository.
+3. В настройках проекта:
+   - Root Directory: `frontend`
+4. Добавьте переменную окружения в Vercel (Settings → Environment Variables):
+   - `VITE_API_URL=https://<ваш-HTTPS-URL-backend-из-туннеля>`
+5. Нажмите Deploy.
+
+### Шаг 4. Разрешите домен Vercel в backend (CORS)
+
+После деплоя Vercel выдаст URL типа `https://<app>.vercel.app`.
+В `backend/.env` укажите:
+
+- `FRONTEND_URL=https://<app>.vercel.app`
+- (опционально) `CORS_ORIGINS=https://<app>.vercel.app`
+
+Перезапустите backend.
+
+### Telegram (опционально)
+
+- Если backend на домашнем ПК: проще поставить `TELEGRAM_POLLING=true` и не настраивать webhook.
+- Если хотите webhook: `TELEGRAM_POLLING=false` и `TELEGRAM_WEBHOOK_URL=https://<public-backend>/api/telegram/webhook`.
+
 ## Опция 1: Railway (Рекомендуется)
 
 Railway предоставляет простой способ развертывания как backend, так и frontend.
@@ -57,6 +154,17 @@ Railway предоставляет простой способ разверты�
 
 ## Опция 2: Vercel (Frontend) + Render (Backend)
 
+Эта опция хорошо подходит, если хотите, чтобы всё работало 24/7 без вашего ПК.
+
+### База данных (PostgreSQL)
+
+Подойдёт любой managed Postgres (часто есть free-tier):
+
+- Supabase (https://supabase.com)
+- Neon (https://neon.tech)
+
+Создайте базу и скопируйте строку подключения `DATABASE_URL`.
+
 ### Backend на Render
 
 1. **Создайте аккаунт на Render.com**
@@ -73,7 +181,21 @@ Railway предоставляет простой способ разверты�
    - Start Command: `npx prisma migrate deploy && npm start`
 
 4. **Добавьте переменные окружения**
-   (такие же как для Railway)
+   Минимум:
+
+   - `NODE_ENV=production`
+   - `DATABASE_URL=...`
+   - `JWT_SECRET=...` (случайная длинная строка)
+   - `JWT_EXPIRES_IN=7d`
+   - `FRONTEND_URL=https://<ваш-домен-vercel>` (позже обновите)
+   - (опционально) `CORS_ORIGINS=https://<ваш-домен-vercel>`
+
+   Telegram (если нужен):
+   - `TELEGRAM_BOT_TOKEN=...`
+   - `TELEGRAM_POLLING=false`
+   - `TELEGRAM_WEBHOOK_URL=https://<ваш-backend-домен-render>/api/telegram/webhook`
+
+   Примечание: на Render порт обычно задаётся переменной `PORT`. В коде уже используется `process.env.PORT`.
 
 ### Frontend на Vercel
 
@@ -90,7 +212,15 @@ Railway предоставляет простой способ разверты�
 
 3. **Настройте переменные**
    - В Vercel Dashboard → Settings → Environment Variables
-   - Добавьте `VITE_API_URL`
+   - Добавьте `VITE_API_URL=https://<ваш-backend-домен-render>`
+
+После этого redeploy frontend.
+
+### Проверка после деплоя
+
+1. Backend health: откройте `https://<render-backend>/health`
+2. Frontend: откройте `https://<vercel-frontend>`
+3. Регистрация/логин должны работать
 
 ## Опция 3: DigitalOcean App Platform
 
