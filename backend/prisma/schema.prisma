@@ -1,0 +1,159 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  username          String    @unique
+  password          String
+  telegramUsername  String?   @unique
+  telegramChatId    String?   @unique
+  telegramVerified  Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Pairing relationship
+  pairedWithId      String?   @unique
+  pairedWith        User?     @relation("UserPairing", fields: [pairedWithId], references: [id], onDelete: SetNull)
+  pairedTo          User?     @relation("UserPairing")
+
+  // Content created by user
+  loveReasons       LoveReason[]
+  giftIdeas         GiftIdea[]
+  statePosts        StatePost[]
+  reactions         Reaction[]
+  comments          Comment[]
+
+  // Pairing requests
+  sentRequests      PairingRequest[] @relation("SentRequests")
+  receivedRequests  PairingRequest[] @relation("ReceivedRequests")
+
+  @@index([email])
+  @@index([username])
+  @@index([telegramChatId])
+}
+
+model PairingRequest {
+  id          String   @id @default(uuid())
+  fromUserId  String
+  toUserId    String
+  status      String   @default("pending") // pending, accepted, rejected
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  fromUser    User     @relation("SentRequests", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser      User     @relation("ReceivedRequests", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId])
+  @@index([toUserId])
+}
+
+model LoveReason {
+  id          String     @id @default(uuid())
+  userId      String
+  content     String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions   Reaction[]
+  comments    Comment[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model GiftIdea {
+  id          String     @id @default(uuid())
+  userId      String
+  title       String
+  description String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions   Reaction[]
+  comments    Comment[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model StatePost {
+  id          String     @id @default(uuid())
+  userId      String
+  type        String     // "physical" or "emotional"
+  content     String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reactions   Reaction[]
+  comments    Comment[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Reaction {
+  id              String      @id @default(uuid())
+  userId          String
+  type            String      // emoji type: "heart", "like", "love", "smile", etc.
+  
+  // Polymorphic relation - only one should be set
+  loveReasonId    String?
+  giftIdeaId      String?
+  statePostId     String?
+  commentId       String?
+  
+  createdAt       DateTime    @default(now())
+
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loveReason      LoveReason? @relation(fields: [loveReasonId], references: [id], onDelete: Cascade)
+  giftIdea        GiftIdea?   @relation(fields: [giftIdeaId], references: [id], onDelete: Cascade)
+  statePost       StatePost?  @relation(fields: [statePostId], references: [id], onDelete: Cascade)
+  comment         Comment?    @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, loveReasonId])
+  @@unique([userId, type, giftIdeaId])
+  @@unique([userId, type, statePostId])
+  @@unique([userId, type, commentId])
+  @@index([loveReasonId])
+  @@index([giftIdeaId])
+  @@index([statePostId])
+  @@index([commentId])
+}
+
+model Comment {
+  id              String      @id @default(uuid())
+  userId          String
+  content         String
+  
+  // Polymorphic relation - only one should be set
+  loveReasonId    String?
+  giftIdeaId      String?
+  statePostId     String?
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  loveReason      LoveReason? @relation(fields: [loveReasonId], references: [id], onDelete: Cascade)
+  giftIdea        GiftIdea?   @relation(fields: [giftIdeaId], references: [id], onDelete: Cascade)
+  statePost       StatePost?  @relation(fields: [statePostId], references: [id], onDelete: Cascade)
+  reactions       Reaction[]
+
+  @@index([loveReasonId])
+  @@index([giftIdeaId])
+  @@index([statePostId])
+  @@index([createdAt])
+}
