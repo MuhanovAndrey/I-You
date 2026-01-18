@@ -116,8 +116,11 @@ Railway предоставляет простой способ разверты�
    - Нажмите "New" → "GitHub Repo"
    - Выберите репозиторий `I-You`
    - Root Directory: `backend`
-   - Build Command: `npm install && npx prisma generate && npm run build`
-   - Start Command: `npx prisma migrate deploy && npm start`
+   - Build Command: `npm install && npm run prisma:generate && npm run build`
+   - Start Command: `npm run prisma:migrate:deploy && npm start`
+
+Если в логах видите ошибку Prisma `schema.prisma: file not found` / `prisma/schema.prisma: file not found`, почти всегда причина в том, что Railway выполняет команды не из папки `backend`.
+Проверьте, что Root Directory действительно `backend` (это критично для монорепо).
 
 4. **Добавьте переменные окружения**
    ```
@@ -141,7 +144,10 @@ Railway предоставляет простой способ разверты�
    - Выберите тот же GitHub репозиторий
    - Root Directory: `frontend`
    - Build Command: `npm install && npm run build`
-   - Start Command: `npm run preview`
+   - Start Command: `npm start`
+
+Если видите ошибку `Missing script: "preview"`, это почти всегда значит, что Railway запускает не `frontend/package.json`.
+Проверьте, что у сервиса действительно установлен Root Directory = `frontend`.
 
 2. **Добавьте переменные**
    ```
