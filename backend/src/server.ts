@@ -29,6 +29,8 @@ const pairingRoutes = require('./routes/pairing.routes').default;
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const telegramRoutes = require('./routes/telegram.routes').default;
 // eslint-disable-next-line @typescript-eslint/no-var-requires
+const goalRoutes = require('./routes/goal.routes').default;
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const telegramService = require('./services/telegram.service').default;
 
 const app: Express = express();
@@ -80,6 +82,7 @@ app.use('/api/reactions', reactionRoutes);
 app.use('/api/comments', commentRoutes);
 app.use('/api/pairing', pairingRoutes);
 app.use('/api/telegram', telegramRoutes);
+app.use('/api/goals', goalRoutes);
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, next: any) => {

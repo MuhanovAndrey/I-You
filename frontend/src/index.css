@@ -3,6 +3,15 @@
 @tailwind utilities;
 
 @layer base {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  #root {
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-gradient-to-br from-rose-50/85 via-pink-50/85 to-pink-100/85;
     min-height: 100vh;

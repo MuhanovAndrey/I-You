@@ -10,7 +10,7 @@ import CreatePostModal from '../components/CreatePostModal';
 type PostType = 'all' | 'loveReasons' | 'giftIdeas' | 'statePosts';
 
 export default function Dashboard() {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<PostType>('all');
   const [loveReasons, setLoveReasons] = useState<LoveReason[]>([]);
   const [giftIdeas, setGiftIdeas] = useState<GiftIdea[]>([]);
@@ -100,7 +100,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen p-4 relative z-10">
+    <div className="min-h-screen p-4 relative z-10 overflow-x-hidden">
       {/* Header */}
       <header className="glass-card p-6 mb-6 max-w-4xl mx-auto">
         <div className="flex justify-between items-center">
@@ -116,17 +116,17 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2">
             <Link
+              to="/goals"
+              className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg hover:bg-white/50 transition-colors"
+            >
+              Цели
+            </Link>
+            <Link
               to="/profile"
               className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg hover:bg-white/50 transition-colors"
             >
               Профиль
             </Link>
-            <button
-              onClick={logout}
-              className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg hover:bg-white/50 transition-colors"
-            >
-              Выйти
-            </button>
           </div>
         </div>
       </header>
@@ -135,7 +135,7 @@ export default function Dashboard() {
       <div className="max-w-4xl mx-auto mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
           onClick={() => handleCreatePost('loveReason')}
-          className="glass-card p-6 text-center hover:scale-105 transition-transform"
+          className="glass-card p-6 text-center sm:hover:scale-105 transition-transform"
         >
           <div className="text-4xl mb-2">❤️</div>
           <h3 className="font-semibold text-pink-600">Причина любви</h3>
@@ -144,7 +144,7 @@ export default function Dashboard() {
 
         <button
           onClick={() => handleCreatePost('giftIdea')}
-          className="glass-card p-6 text-center hover:scale-105 transition-transform"
+          className="glass-card p-6 text-center sm:hover:scale-105 transition-transform"
         >
           <div className="text-4xl mb-2">🎁</div>
           <h3 className="font-semibold text-rose-600/85">Идея подарка</h3>
@@ -153,7 +153,7 @@ export default function Dashboard() {
 
         <button
           onClick={() => handleCreatePost('statePost')}
-          className="glass-card p-6 text-center hover:scale-105 transition-transform"
+          className="glass-card p-6 text-center sm:hover:scale-105 transition-transform"
         >
           <div className="text-4xl mb-2">💭</div>
           <h3 className="font-semibold text-blue-600">Моё состояние</h3>
@@ -163,7 +163,7 @@ export default function Dashboard() {
 
       {/* Tabs */}
       <div className="max-w-4xl mx-auto mb-6">
-        <div className="glass-card p-2 flex gap-2">
+        <div className="glass-card p-2 flex gap-2 overflow-x-auto flex-nowrap">
           {[
             { key: 'all', label: 'Все', icon: '📝' },
             { key: 'loveReasons', label: 'Любовь', icon: '❤️' },
@@ -173,7 +173,7 @@ export default function Dashboard() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key as PostType)}
-              className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
+              className={`flex-none sm:flex-1 shrink-0 py-2 px-3 sm:py-3 sm:px-4 rounded-xl font-semibold transition-all text-sm sm:text-base ${
                 activeTab === tab.key
                   ? 'bg-gradient-to-r from-rose-400/85 to-pink-500/85 text-white shadow-lg'
                   : 'text-gray-600 hover:bg-white/50'

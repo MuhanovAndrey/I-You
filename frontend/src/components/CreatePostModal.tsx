@@ -108,7 +108,7 @@ export default function CreatePostModal({ type, onClose, onCreated }: CreatePost
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Тип состояния
                 </label>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <label className="flex items-center cursor-pointer">
                     <input
                       type="radio"
@@ -146,7 +146,7 @@ export default function CreatePostModal({ type, onClose, onCreated }: CreatePost
             </>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               type="submit"
               disabled={loading}
@@ -157,7 +157,7 @@ export default function CreatePostModal({ type, onClose, onCreated }: CreatePost
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary"
+              className="btn-secondary w-full sm:w-auto"
             >
               Отмена
             </button>

@@ -35,6 +35,11 @@ model User {
   reactions         Reaction[]
   comments          Comment[]
 
+  // Shared goals
+  sharedGoalsOwned   SharedGoal[] @relation("SharedGoalOwner")
+  sharedGoalsPartner SharedGoal[] @relation("SharedGoalPartner")
+  sharedGoalItemsDone SharedGoalItem[] @relation("SharedGoalItemDoneBy")
+
   // Pairing requests
   sentRequests      PairingRequest[] @relation("SentRequests")
   receivedRequests  PairingRequest[] @relation("ReceivedRequests")
@@ -42,6 +47,45 @@ model User {
   @@index([email])
   @@index([username])
   @@index([telegramChatId])
+}
+
+model SharedGoal {
+  id            String   @id @default(uuid())
+  ownerUserId   String
+  partnerUserId String
+  title         String
+  description   String?
+  isArchived    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  ownerUser     User     @relation("SharedGoalOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  partnerUser   User     @relation("SharedGoalPartner", fields: [partnerUserId], references: [id], onDelete: Cascade)
+  items         SharedGoalItem[]
+
+  @@index([ownerUserId])
+  @@index([partnerUserId])
+  @@index([isArchived])
+  @@index([createdAt])
+}
+
+model SharedGoalItem {
+  id           String   @id @default(uuid())
+  goalId       String
+  content      String
+  isDone       Boolean  @default(false)
+  doneByUserId String?
+  doneAt       DateTime?
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  goal         SharedGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  doneByUser   User?      @relation("SharedGoalItemDoneBy", fields: [doneByUserId], references: [id], onDelete: SetNull)
+
+  @@index([goalId])
+  @@index([goalId, order])
+  @@index([isDone])
 }
 
 model PairingRequest {

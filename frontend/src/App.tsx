@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Pairing from './pages/Pairing';
 import Profile from './pages/Profile';
+import Goals from './pages/Goals';
 import AnimatedBackground from './components/AnimatedBackground';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
         <Route path="/register" element={!user ? <Register /> : <Navigate to="/" />} />
         <Route path="/pairing" element={user && !user.pairedWithId ? <Pairing /> : <Navigate to="/" />} />
         <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" />} />
+        <Route path="/goals" element={user && user.pairedWithId ? <Goals /> : <Navigate to={user ? '/pairing' : '/login'} />} />
         <Route path="/" element={user ? (user.pairedWithId ? <Dashboard /> : <Navigate to="/pairing" />) : <Navigate to="/login" />} />
       </Routes>
     </Router>

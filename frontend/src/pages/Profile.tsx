@@ -91,12 +91,6 @@ export default function Profile() {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-gray-800 px-4 py-2 rounded-lg bg-white/40">Профиль</span>
-            <button
-              onClick={logout}
-              className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg hover:bg-white/50 transition-colors"
-            >
-              Выйти
-            </button>
           </div>
         </div>
       </header>
@@ -184,6 +178,13 @@ export default function Profile() {
             {/* <Link to="/pairing" className="btn-secondary w-full inline-flex justify-center">
               Найти пару
             </Link> */}
+            <button
+              type="button"
+              onClick={logout}
+              className="btn-secondary w-full"
+            >
+              Выйти
+            </button>
           </div>
         </div>
       </div>

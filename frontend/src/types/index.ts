@@ -96,3 +96,27 @@ export interface PairingRequest {
     username: string;
   };
 }
+
+export interface SharedGoalItem {
+  id: string;
+  goalId: string;
+  content: string;
+  isDone: boolean;
+  doneByUserId?: string | null;
+  doneAt?: string | null;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SharedGoal {
+  id: string;
+  ownerUserId: string;
+  partnerUserId: string;
+  title: string;
+  description?: string | null;
+  isArchived: boolean;
+  createdAt: string;
+  updatedAt: string;
+  items: SharedGoalItem[];
+}
