@@ -16,6 +16,17 @@
     @apply bg-gradient-to-br from-rose-50/85 via-pink-50/85 to-pink-100/85;
     min-height: 100vh;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
